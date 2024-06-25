@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from torchvision.utils import save_image
 import matplotlib.pyplot as plt
 import numpy as np
+import cv2
 
 from torch.autograd import Variable
 
@@ -105,52 +106,82 @@ class FPN(nn.Module):
         print("Bottom-Up")
         c1 = self.maxpool(self.relu(self.bn1(self.conv1(x))))
         print("c1 : ", c1.shape)
-        self.tensor_to_image(c1)
+        tensor_img_c1= self.tensor_to_image(c1)
         c2 = self.layer1(c1)
-        self.tensor_to_image(c2)
+        tensor_img_c2 = self.tensor_to_image(c2)
         print("c2 : ", c2.shape)
         c3 = self.layer2(c2)
-        self.tensor_to_image(c3)
+        tensor_img_c3 = self.tensor_to_image(c3)
         print("c3 : ", c3.shape)
         c4 = self.layer3(c3)
-        self.tensor_to_image(c4)
+        tensor_img_c4 = self.tensor_to_image(c4)
         print("c4 : ", c4.shape)
         c5 = self.layer4(c4)
-        self.tensor_to_image(c5)
+        tensor_img_c5 = self.tensor_to_image(c5)
         print("c5 : ", c5.shape)
 
         #Top-down
         p5 = self.top_layer(c5)
         print("p5 : ", p5.shape)
-        self.tensor_to_image(p5)
+        tensor_img_p5 = self.tensor_to_image(p5)
         p4 = self._upsample_add(p5, self.latlayer1(c4))
         print("p4 : ", p4.shape)
-        self.tensor_to_image(p4)
+        tensor_img_p4 = self.tensor_to_image(p4)
         p3 = self._upsample_add(p4, self.latlayer2(c3))
         print("p3 : ", p3.shape)
-        self.tensor_to_image(p3)
+        tensor_img_p3 = self.tensor_to_image(p3)
         p2 = self._upsample_add(p3, self.latlayer3(c2))
         print("p2 : ", p2.shape)
-        self.tensor_to_image(p2)
+        tensor_img_p2 = self.tensor_to_image(p2)
 
         #Smooth
         p4 = self.smooth_layer1(p4)
-        self.tensor_to_image(p4)
+        tensor_img_sp4 = self.tensor_to_image(p4)
         p3 = self.smooth_layer2(p3)
-        self.tensor_to_image(p3)
+        tensor_img_sp3 = self.tensor_to_image(p3)
         p2 = self.smooth_layer3(p2)
-        self.tensor_to_image(p2)
+        tensor_img_sp2 = self.tensor_to_image(p2)
+        self.merge_tensor_image(tensor_img_c2, tensor_img_c3, tensor_img_c4, tensor_img_c5, tensor_img_p2, tensor_img_p3,
+                                tensor_img_p4, tensor_img_p5, tensor_img_sp2, tensor_img_sp3, tensor_img_sp4)
 
         return p2, p3, p4, p5
 
     def tensor_to_image(self, tensor):
         tensor = tensor.squeeze(0)
         merged_tensor = tensor.mean(dim=0, keepdim=True).unsqueeze(0)
-        plt.figure(figsize=(5, 5))
-        plt.imshow(merged_tensor.squeeze().detach().numpy())
+        return merged_tensor
+        # plt.figure(figsize=(5, 5))
+        # plt.imshow(merged_tensor.squeeze().detach().numpy())
+        # plt.axis('off')
+        # plt.show()
+
+    def merge_tensor_image(self, c2, c3, c4, c5, p2, p3, p4, p5, sp2, sp3, sp4):
+        fig = plt.figure(figsize=(10, 5))
+        ax0_0 = fig.add_subplot(3, 4, 1)
+        ax0_0.imshow(c2.squeeze().detach().numpy())
+        ax0_1 = fig.add_subplot(3, 4, 2)
+        ax0_1.imshow(c3.squeeze().detach().numpy())
+        ax0_2 = fig.add_subplot(3, 4, 3)
+        ax0_2.imshow(c4.squeeze().detach().numpy())
+        ax0_3 = fig.add_subplot(3, 4, 4)
+        ax0_3.imshow(c5.squeeze().detach().numpy())
+        ax1_0 = fig.add_subplot(3, 4, 5)
+        ax1_0.imshow(p2.squeeze().detach().numpy())
+        ax1_1 = fig.add_subplot(3, 4, 6)
+        ax1_1.imshow(p3.squeeze().detach().numpy())
+        ax1_2 = fig.add_subplot(3, 4, 7)
+        ax1_2.imshow(p4.squeeze().detach().numpy())
+        ax1_3 = fig.add_subplot(3, 4, 8)
+        ax1_3.imshow(p5.squeeze().detach().numpy())
+        ax2_0 = fig.add_subplot(3, 4, 9)
+        ax2_0.imshow(sp2.squeeze().detach().numpy())
+        ax2_1 = fig.add_subplot(3, 4, 10)
+        ax2_1.imshow(sp3.squeeze().detach().numpy())
+        ax2_2 = fig.add_subplot(3, 4, 11)
+        ax2_2.imshow(sp4.squeeze().detach().numpy())
+
         plt.axis('off')
         plt.show()
-
 
 
 
